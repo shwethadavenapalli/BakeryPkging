@@ -1,6 +1,5 @@
 package backery;
 
-
 import backery.exception.ProductNotFound;
 
 import java.util.*;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 public class Baker {
 
     final Map<String, List<IProduct>> productMap = new HashMap<String, List<IProduct>>();
-    private Package[] packages;
 
     public Baker(IProduct... products) {
 
@@ -25,6 +23,76 @@ public class Baker {
 
     }
 
+
+    public ShippingBag getPacks(final String productCode, int quantity) throws ProductNotFound {
+        List<IProduct> productList = productMap.getOrDefault(productCode, new ArrayList<>());
+
+        if (productList.isEmpty())
+            throw new ProductNotFound();
+
+        List<Package> collectedPackageList =
+                productList.stream()
+                        .filter(product -> product instanceof Package)
+                        .map(product -> (Package) product)
+                        .collect(Collectors.toList());
+
+        List<PackageChain> paths = new ArrayList<>();
+        paths.add(new PackageChain(Arrays.asList(quantity)));
+
+        PackageChain minimalPkg = getMinimalPkg(collectedPackageList, paths);
+        List<IProduct> packages = new ArrayList<>();
+
+
+        if(minimalPkg==null) return new ShippingBag(packages);
+
+        List<Integer> numbersList = minimalPkg.getNumbersList();
+
+        List<Integer> pkgQuantityList = new ArrayList<>();
+        for(int i=0;i<numbersList.size()-1;i++){
+            System.out.println("Numbers "+numbersList.get(i));
+            pkgQuantityList.add(numbersList.get(i)-numbersList.get(i+1));
+        }
+
+        for(int index=0;index<pkgQuantityList.size();index++){
+            Integer pkgQuantity = pkgQuantityList.get(index);
+            Optional<Package> optionalPackage =
+                    collectedPackageList.stream().
+                            filter(aPackage -> aPackage.getQuantity() == pkgQuantity)
+                    .findFirst();
+            packages.add(optionalPackage.get());
+        }
+        return new ShippingBag(packages);
+    }
+
+    private PackageChain getMinimalPkg(List<Package> collectedPackageList, List<PackageChain> paths) {
+
+        List<PackageChain> newPackagePaths = new ArrayList<>();
+
+         for(Package pkg : collectedPackageList){
+
+             for(PackageChain packageChain : paths){
+                 int lastNumber = packageChain.getLastNumber();
+                 int newNumber = lastNumber-pkg.getQuantity();
+
+                 if(newNumber>=0){
+                     PackageChain packagePath = new PackageChain(packageChain);
+                     packagePath.add(newNumber);
+                     newPackagePaths.add(packagePath);
+                     if(newNumber==0){
+                         return packagePath;
+                     }
+                 }
+             }
+        }
+
+        if (newPackagePaths.size() == 0) {
+            return null;
+        }
+
+        return getMinimalPkg(collectedPackageList,newPackagePaths);
+
+    }
+
     /***
      *
      * @param productCode
@@ -32,7 +100,7 @@ public class Baker {
      * @return
      * @throws ProductNotFound
      */
-    public ShippingBag getPacks(final String productCode, int quantity) throws ProductNotFound {
+    public ShippingBag getPacks1(final String productCode, int quantity) throws ProductNotFound {
 
         List<IProduct> productList = productMap.getOrDefault(productCode, new ArrayList<>());
 
