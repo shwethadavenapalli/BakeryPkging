@@ -1,6 +1,10 @@
 package backery;
 
+import backery.domain.IProduct;
+import backery.domain.Package;
 import backery.exception.ProductNotFound;
+import backery.model.PackageChain;
+import backery.model.ShippingBag;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -8,16 +12,12 @@ import java.util.stream.Collectors;
 
 public class Baker {
 
-    final Map<String, List<IProduct>> productMap = new HashMap<String, List<IProduct>>();
+    private final Map<String, List<IProduct>> productMap = new HashMap<>();
 
     public Baker(IProduct... products) {
 
-        Arrays.asList(products).stream().forEach(product -> {
-            List<IProduct> iProduct = productMap.get(product.getCode());
-            if (iProduct == null) {
-                iProduct = new ArrayList<>();
-                productMap.put(product.getCode(), iProduct);
-            }
+        Arrays.stream(products).forEach(product -> {
+            List<IProduct> iProduct = productMap.computeIfAbsent(product.getCode(), k -> new ArrayList<>());
             iProduct.add(product);
         });
 
@@ -37,7 +37,7 @@ public class Baker {
                         .collect(Collectors.toList());
 
         List<PackageChain> paths = new ArrayList<>();
-        paths.add(new PackageChain(Arrays.asList(quantity)));
+        paths.add(new PackageChain(Collections.singletonList(quantity)));
 
         PackageChain minimalPkg = getMinimalPkg(collectedPackageList, paths);
         List<IProduct> packages = new ArrayList<>();
@@ -49,20 +49,19 @@ public class Baker {
 
         List<Integer> pkgQuantityList = new ArrayList<>();
         for(int i=0;i<numbersList.size()-1;i++){
-            System.out.println("Numbers "+numbersList.get(i));
             pkgQuantityList.add(numbersList.get(i)-numbersList.get(i+1));
         }
 
-        for(int index=0;index<pkgQuantityList.size();index++){
-            Integer pkgQuantity = pkgQuantityList.get(index);
+        for (Integer pkgQuantity : pkgQuantityList) {
             Optional<Package> optionalPackage =
                     collectedPackageList.stream().
                             filter(aPackage -> aPackage.getQuantity() == pkgQuantity)
-                    .findFirst();
+                            .findFirst();
             packages.add(optionalPackage.get());
         }
         return new ShippingBag(packages);
     }
+
 
     private PackageChain getMinimalPkg(List<Package> collectedPackageList, List<PackageChain> paths) {
 
@@ -121,7 +120,7 @@ public class Baker {
 
         int desiredQuantity = quantity;
         int size = collectedPackageList.size();
-        Package pkg = null;
+        Package pkg;
 
         for (int i = 0; i < size; i++) {
             pkg = (Package) collectedPackageList.get(i);
@@ -141,7 +140,7 @@ public class Baker {
                     addNumberOfItems(subPackages, pkg, noOfItemsForAPkg);
                     if (desiredQuantity == 0)
                         break;
-                    if (j == size - 1 && desiredQuantity != 0) {
+                    if (j == size - 1) {
                         desiredQuantity = quantity % ((Package) collectedPackageList.get(i)).getQuantity();
                         subPackages.clear();
                     }

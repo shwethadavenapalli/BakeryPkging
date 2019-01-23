@@ -1,11 +1,11 @@
-package backery;
+package backery.model;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PackageChain {
 
-    List<Integer> numbersList;
+    private List<Integer> numbersList;
 
     public PackageChain(PackageChain packageChain){
         numbersList = new ArrayList<>(packageChain.numbersList);

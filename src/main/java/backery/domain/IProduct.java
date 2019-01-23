@@ -1,4 +1,4 @@
-package backery;
+package backery.domain;
 
 public interface IProduct {
     int getPrice();

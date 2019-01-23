@@ -1,4 +1,6 @@
-package backery;
+package backery.model;
+
+import backery.domain.IProduct;
 
 import java.util.List;
 import java.util.Objects;
@@ -12,7 +14,7 @@ public class ShippingBag {
 
     public int getPrice() {
         return products.stream()
-                .map(product -> product.getPrice())
+                .map(IProduct::getPrice)
                 .reduce(Integer::sum)
                 .orElse(0);
     }

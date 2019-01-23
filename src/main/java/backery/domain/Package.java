@@ -1,8 +1,8 @@
-package backery;
+package backery.domain;
 
 import java.util.Objects;
 
-public class Package implements  IProduct{
+public class Package implements IProduct {
 
     private final IProduct product;
     private final int quantity;
